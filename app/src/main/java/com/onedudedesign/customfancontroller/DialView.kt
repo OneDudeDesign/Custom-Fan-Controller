@@ -8,11 +8,20 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
-private enum class FanSpeed(val label: Int){
+private enum class FanSpeed(val label: Int) {
     OFF(R.string.fan_off),
     LOW(R.string.fan_low),
     MEDIUM(R.string.fan_medium),
     HIGH(R.string.fan_high);
+
+    fun next() =
+        when (this) {
+            OFF -> LOW
+            LOW -> MEDIUM
+            MEDIUM -> HIGH
+            HIGH -> OFF
+        }
+
 }
 
 private const val RADIUS_OFFSET_LABEL = 30
@@ -22,10 +31,11 @@ class DialView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : View(context,attrs,defStyleAttr) {
+) : View(context, attrs, defStyleAttr) {
 
     private var radius = 0.0f       //radius of the circle
     private var fanSpeed = FanSpeed.OFF     //the active selection
+
     //position variable that will be ussed to draw lable and indicator circle
     private val pointPosition: PointF = PointF(0.0f, 0.0f)
 
@@ -33,7 +43,21 @@ class DialView @JvmOverloads constructor(
         style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
         textSize = 55.0f
-        typeface = Typeface.create("",Typeface.BOLD)
+        typeface = Typeface.create("", Typeface.BOLD)
+    }
+
+    init {
+        isClickable = true
+    }
+
+    override fun performClick(): Boolean {
+        if (super.performClick()) return true
+
+        fanSpeed = fanSpeed.next()
+        contentDescription = resources.getString(fanSpeed.label)
+
+        invalidate()
+        return true
     }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
@@ -47,6 +71,7 @@ class DialView @JvmOverloads constructor(
         x = (radius * cos(angle)).toFloat() + width / 2
         y = (radius * sin(angle)).toFloat() + height / 2
     }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         // Set dial background color to green if selection not off.
@@ -59,7 +84,7 @@ class DialView @JvmOverloads constructor(
         val markerRadius = radius + RADIUS_OFFSET_INDICATOR
         pointPosition.computeXYForSpeed(fanSpeed, markerRadius)
         paint.color = Color.BLACK
-        canvas.drawCircle(pointPosition.x, pointPosition.y, radius/12, paint)
+        canvas.drawCircle(pointPosition.x, pointPosition.y, radius / 12, paint)
 
         // Draw the text labels.
         val labelRadius = radius + RADIUS_OFFSET_LABEL
